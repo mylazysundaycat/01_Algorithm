@@ -1,4 +1,6 @@
 # chapter02_ex03_202003978_권예지
+import time
+start=time.time()
 def binary_digits(n):
     #recursion을 종료할 수 있게 만들어주는 조건식
     if(n//2==0): #n을 나누었을때 몫이 0이면, 나머지가 반환되며 반복이 종료되어야 한다.
@@ -14,4 +16,5 @@ def binary_digits(n):
         세 번째 시도, str(b)를 재귀함수 뒤로 바꿔주니 원하는 대로 이진수 비트가 출력됨 성공!
         """
 print(binary_digits(13))
-print("시간 복잡도는 밑이 2이고 진수가 N인 로그 시간")
+print("실행시간:",time.time()-start) #구글링을 통해 time 함수를 찾아 사용했다.
+print("시간 복잡도는 O(log2N)") #시간복잡도
