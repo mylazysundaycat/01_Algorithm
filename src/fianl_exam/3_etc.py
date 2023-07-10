@@ -145,3 +145,118 @@ def multMat(M1, M2):
 
 
 # k번째 작은 수 찾기 (4.10)
+"""
+리스트에서 k번째로 작은 항목을 찾아라. 단, 리스트는 정렬되어있지 않다.
+1. 정렬 이용
+리스트를 sort() 후에 찾는다
+2. 축소 정복
+(1) 리스트의 한 항목을 피벗으로 선택한다. 
+(2) 리스트의 나머지 항목들을 모두 검사하여 피벅보다 작으면 왼쪽으로 옮기고
+피벗보다 크면 오른쪽으로 옮긴다.
+"""
+# 정렬 이용
+def kth_smallest_sort(A, k):
+    A.sort()
+    return A[k-1]
+# 축소 정복 기법 이용
+def partition(A, left, right):
+    low = left +1
+    high = right
+    pivot = A[left] # 피벗을 리스트의 맨 왼쪽 항목으로 설정
+    while(low<=high): # low와 high가 역전되지 않는 한 반복
+        while low <= right and A[low]<pivot: low +=1
+        while high >= left and A[high]>pivot: high -=1
+
+        if low < high: # A[low]가 피벗보다 크고 A[high]가 피벗보다 작은 상태
+            A[low], A[high] = A[high], A[low]
+    A[left], A[high] = A[high], A[low]
+    return high
+def quick_select(A, left, right, k):
+    pos = partition(A, left, right)
+    if(pos+1 == left+k):
+        return A[pos]
+    elif(pos+1 > left+k):
+        return quick_select(A, left, pos-1, k)
+    else:
+        return quick_select(A, pos+1, right, k-(pos+1-left))
+
+
+# 7장 동적 계획법
+"""
+- 분할 정복 기법과 비슷하지만, 동적 프로그래밍은 부분 문제들의 답을 어딘가에 저장해 놓고 필요할 때 다시 꺼내서
+사용하는 것인데 같은 부분 문제를 다시 풀지 않도록 하는 것이 핵심 아이디어다.
+- 한번 푼 문제를 다음에 다시 풀어야 할 때는 그 문제에 대한 저장된 해답을 이용하는 것이 동적 계획법의 기본 아이디어이다.
+- 부분 해를 저장하는 2가지 방법은 '메모이제이션'과 '테이블화'이다
+1. 메모이제이션
+2. 테이블화
+결과를 저장할 테이블을 먼저 만든다. 다음으로 답이 이미 알려진 단순한 상황, 
+즉 기반 상황에 대한 테이블을 먼저 채우고 이들을 바탕으로 테이블을 채워서 올라간다.
+"""
+
+# 피보나치 수열 (7.1)
+# 메모이제이션
+"""
+def fib_dp_mem(n):
+    if(mem[n]==None): #풀리지 않은 경우
+        if n<2: #기반상황
+            mem[n] = n 
+        else: #일반상황
+            mem[n] = fib_dp_mem(n-1)+fib_dp_mem(n-2)
+    return mem[n]
+"""
+#테이블화
+def fib_dp_tab(n):
+    f = [None]*(n+1) # n+1크기의 테이블믄 제작
+    f[0] = 0 # 기반상황
+    f[1] = 1
+    for i in range(2, n+1): # 일반상황
+        f[i] = f[i-1] + f[i-2]
+    return f[n]
+
+#이항계수 (7.3)
+#분할 정복 기법
+def bino_coef_dc(n, k):
+    if k==0 or k==n:
+        return 1
+    return bino_coef_dc(n-1, k-1) + bino_coef_dc(n-1, k)
+#동적 계획법
+def bino_coef_dp(n,k):
+    C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
+
+    for i in range(n+1):
+        for j in range(min(i, k)+1):
+            if j==0 or j==i:
+                C[i][j] = 1
+            else:
+                C[i][j] = C[i-1][j-1] + C[i-1][j]
+    return C[n][k]
+
+
+# 배낭 채우기  (7.5)
+# 분할 정복 기법
+def knapSack_bf(W, wt, val, n): # W: 현재 배낭의 용량, wt: 물건들의 무게를 저장한 리스트, val: 물건들의 가치를 저장한 리스트, n: 물건들의 수
+    if n == 0 or W == 0 : # 기반 상황
+        return 0
+    if (wt[n-1]>W): # n번째 항목이 배낭 용량보다 크다면
+        return knapSack_bf(W, wt, val, n-1) # 넣을 수 없다
+    else: # n번째 항목이 배낭 용량보다 작다면
+        valWithout = knapSack_bf(W, wt, val, n-1) #이 항목을 넣지 않는 경우와
+        valWith = val[n-1] + knapSack_bf(W-wt[n-1], wt, val, n-1) #넣는 경우의 가치를 계산하여 큰 값을 선택해 반환한다
+        return max(valWith, valWithout)
+# 동적 계산법
+def knapSack_dp(W, wt, val, n):
+    A = [[0 for x in range(W+1)] for x in range(n+1)]
+
+    for i in range(1, n+1):
+        for w in range(1, W+1):
+            if wt[i-1]>w: #i번째 물건이 배낭 용량을 초과
+                A[i][w] = A[i-1][w]
+            else: #i번째 물건이 배낭 용량 이하
+                valWith = val[i-1] + A[i-1][w-wt[i-1]]
+                valWithout = A[i-1][w]
+                A[i][w] = max(valWith, valWithout)
+    return A[n][w]
+
+
+
+
