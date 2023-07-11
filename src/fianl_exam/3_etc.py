@@ -1,5 +1,4 @@
-import math
-import queue
+import queue, copy, math
 
 # 문자열 매칭 [3.3 억지기법]
 """
@@ -219,7 +218,7 @@ def bino_coef_dc(n, k):
     if k==0 or k==n:
         return 1
     return bino_coef_dc(n-1, k-1) + bino_coef_dc(n-1, k)
-#동적 계획법
+#동적 계획법 (테이블 설계)
 def bino_coef_dp(n,k):
     C = [[-1 for _ in range(k+1)] for _ in range(n+1)]
 
@@ -232,7 +231,7 @@ def bino_coef_dp(n,k):
     return C[n][k]
 
 
-# 배낭 채우기  (7.5)
+# @중요@ 배낭 채우기  (7.5)
 # 분할 정복 기법
 def knapSack_bf(W, wt, val, n): # W: 현재 배낭의 용량, wt: 물건들의 무게를 저장한 리스트, val: 물건들의 가치를 저장한 리스트, n: 물건들의 수
     if n == 0 or W == 0 : # 기반 상황
@@ -243,7 +242,7 @@ def knapSack_bf(W, wt, val, n): # W: 현재 배낭의 용량, wt: 물건들의 �
         valWithout = knapSack_bf(W, wt, val, n-1) #이 항목을 넣지 않는 경우와
         valWith = val[n-1] + knapSack_bf(W-wt[n-1], wt, val, n-1) #넣는 경우의 가치를 계산하여 큰 값을 선택해 반환한다
         return max(valWith, valWithout)
-# 동적 계산법
+# 동적 계산법 (테이블 설계)
 def knapSack_dp(W, wt, val, n):
     A = [[0 for x in range(W+1)] for x in range(n+1)]
 
@@ -259,4 +258,110 @@ def knapSack_dp(W, wt, val, n):
 
 
 
+# @중요@ 최장 공통 부분순서 문제 LCS (7.4)
+"""
+길이가 각각 m과 n인 두 문자열을 비교하는 상황
+1. 기반상황
+n, m이 0이라면 두 문자열 중 하나의 길이가 0이다. 따라서 LCS의 길이도 0이다
+2. 일반상황
+두 문자열의 맨 뒤쪽 문자부터 먼저 처리한다. 즉 X와 Y의 맨 뒤 문자부터 처리하는데,
+이들이 같은 경우와 다른 경우로 분리하여 각각 계산한다. 최종 LCS는 이들 중 더 긴쪽이 된다.
+"""
+# 순환구조
+def lcs_recur(X, Y, m, n):
+    if m==0 or n==0: # 기반 상황
+        return 0
+    elif X[m-1] == Y[n-1]: # 일반상황 1: 마지막 문자가 같을 때
+        return 1 + lcs_recur(X,Y, m-1, n-1)
+    else: # 일반상황 2: 마지막 문자가 다를 떄
+        return max(lcs_recur(X, Y, m, n-1), lcs_recur(X, Y, m-1, n))
+# 동적 계획법 (테이블 설계)
+def lcs_dp(X, Y):
+    m = len(X)
+    n = len(Y)
+    L = [[None]*(n+1) for _ in range(m+1)] # 테이블 생성
 
+    for i in range(m+1): # 테이블에 대한 처리
+        for j in range(n+1):
+            if i==0 or j==0: # 기반 상황
+                L[i][j] = 0
+            elif X[i-1] == Y[j-1]: # 마지막 글자가 같을 때
+                L[i][j] = L[i-1][j-1] + 1
+            else:
+                L[i][j] = max(L[i-1][j], L[i][j-1])
+
+    for i in range(m+1):
+        print(L[i])
+    print("LCS= ", lcs_dp_traceback(X, Y, L))
+    return L[m][n]
+# LCS 추적 알고리즘
+"""
+LCS의
+"""
+def lcs_dp_traceback(X,Y,L):
+    lcs = ""
+    i = len(X)
+    j = len(Y)
+    while i>0 and j>0:
+        v = L[i][j]
+        if v>L[i][j-1] and v>L[i-1][j] and v>L[i-1][j-1]:
+            i -= 1
+            j -= 1
+            lcs = X[i] + lcs
+        elif v == L[i][j-1] and v>L[i-1][j]:j -=1
+        else : i -= 1
+    return lcs
+
+
+
+# 모든 정점간의 최단 경로 길이 Floyd-Warshall 알고리즘 (7.10)
+def shortest_path_floyd(vertex, W): # vertex: 정점리스트, W: 인접행렬
+    vsize = len(vertex) #정점의 갯수
+    D = copy.deepcopy(W)
+
+    for k in range(vsize): #정점 k를 추가할 때
+        for i in range(vsize):
+            for j in range(vsize): #모든 D[i][j]갱신
+                if(D[i][k] + D[k][j] < D[i][j]):
+                    D[i][j] = D[i][k] + D[k][j]
+        printD(D)
+def printD(D):
+    vsize = len(D)
+    print("===================================================")
+    for i in range(vsize):
+        for j in range(vsize):
+            if (D[i][j] == INF): print("INF", end=' ')
+            else: print("%4d"%D[i][j], end='')
+        print("")
+
+INF = 9999
+
+# 편집거리 (7.7)
+"""
+두 개의 문자열이 있을 떄, 하나의 문자열을 수정하여 다른 문자열을 만드는 문제를 생각해보자.
+편집거리라고 불리는 이 문제는 단어의 철자 오류를 찾거나 자연어 번력, 유전자의 유사도 측정 등에 중요하게 사용된다.
+"""
+# 분할 정복
+def edit_distance(S, T, m, n):
+    if m == 0: return n # S가 공백이면, T의 모든 문자에 S를 삽입
+    if n == 0: return m # T가 공백이면, S의 모든 문자들을 삭제
+
+    if S[m-1] == T[n-1]: # 마지막 문자가 같으면 이 문자는 무시
+        return edit_distance(S, T, m-1, n-1)
+
+    return 1 + min(edit_distance(S, T, m, n-1), #삽입
+                   edit_distance(S, T, m-1 ,n), #삭제
+                   edit_distance(S, T, m-1, n-1)) #대체
+# 동적 계획법 (메모이제이션 사용)
+def edit_distance_mem(S, T, m, n, mem):
+    if m == 0: return n
+    if n == 0: return m
+
+    if mem[m-1][n-1] == None:
+        if S[m-1] == T[n-1]:
+            mem[m-1][n-1] = edit_distance(S, T, m-1, n-1, mem)
+        else:
+            mem[m-1][n-1] = 1 + min(edit_distance(S, T, m, n-1, mem), #삽입
+                                    edit_distance(S, T, m-1 ,n, mem), #삭제
+                                    edit_distance(S, T, m-1, n-1, mem)) #대체
+    return mem[m-1][n-1]
