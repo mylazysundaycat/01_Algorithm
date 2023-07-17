@@ -1,4 +1,3 @@
-# chapter02_ex03_202003978_권예지
 import time
 start=time.time()
 def binary_digits(n):
